@@ -1,0 +1,1 @@
+# -prl-and-mdl-mining-k1.pool
