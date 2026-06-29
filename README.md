@@ -1,6 +1,6 @@
 # PearlFortune PRL + MDL Merge Miner
 
-This image mines PRL on PearlFortune.
+Docker image for PearlFortune mining.
 
 Pool:
 global.pearlfortune.org:8888
@@ -14,5 +14,13 @@ PearlFortune says MDL rewards are sent to the MDL address derived from the same 
 Do not use:
 - Exchange wallets
 - Safe wallets
-- K1Pool wallet
-- A separate MDL wallet not derived from the same seed phrase
+- Any wallet where you do not control the seed phrase/private keys
+
+Vast.ai image:
+jokez85/prl-wildrig-salad-builder:latest
+
+Environment variables:
+POOL=global.pearlfortune.org:8888
+PRL_WALLET=your_prl_wallet
+WORKER=vast-1-5090
+GPUS=0,1,2,3
