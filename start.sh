@@ -1,19 +1,16 @@
 #!/bin/bash
 set -e
 
-K1_WALLET="${K1_WALLET:-KrLbwVGBHwyciGJX1xvXWsuY11wqfzJaP3Z}"
-PRL_PAYOUT_WALLET="${PRL_PAYOUT_WALLET:-prl1pl3mxhtlzw4qjycrgxp8n9nd2dntum8gqf03ywsdqw6rm8gp67w3qvdtz79}"
-MDL_PAYOUT_WALLET="${MDL_PAYOUT_WALLET:-mdl1pcn2z4fmjfwm0r890wgalaynlz44afdlcq68d72dz4g8z0kuc5v8qpzzek8}"
-
+POOL="${POOL:-global.pearlfortune.org:8888}"
+PRL_WALLET="${PRL_WALLET:-prl1pl3mxhtlzw4qjycrgxp8n9nd2dntum8gqf03ywsdqw6rm8gp67w3qvdtz79}"
 WORKER="${WORKER:-vast-${HOSTNAME}-5090}"
-POOL="${POOL:-eu.pearl.k1pool.com:3360}"
-FULL_WALLET="${K1_WALLET}.${WORKER}"
+GPUS="${GPUS:-}"
 
-BIN="$(find /opt/SRBMiner -name SRBMiner-MULTI -type f | head -n 1)"
+BIN="$(find /opt/tw-pearl-miner -type f -name 'pearl-gpu-miner*' | head -n 1)"
 
 if [ -z "$BIN" ]; then
-  echo "ERROR: SRBMiner-MULTI not found."
-  find /opt/SRBMiner -maxdepth 5 -type f
+  echo "ERROR: pearl-gpu-miner not found."
+  find /opt/tw-pearl-miner -maxdepth 5 -type f
   exit 1
 fi
 
@@ -21,25 +18,38 @@ chmod +x "$BIN"
 cd "$(dirname "$BIN")"
 
 echo "=========================================="
-echo "Starting PRL + MDL MERGE MINING"
-echo "Algorithm: pearlhash"
+echo "Starting PearlFortune PRL + MDL merge mining"
 echo "Pool: ${POOL}"
-echo "K1Pool wallet.worker: ${FULL_WALLET}"
-echo "PRL payout wallet reference: ${PRL_PAYOUT_WALLET}"
-echo "MDL payout wallet reference: ${MDL_PAYOUT_WALLET}"
-echo "Binary: ${BIN}"
+echo "PRL payout wallet: ${PRL_WALLET}"
+echo "Worker: ${WORKER}"
+echo "Miner: ${BIN}"
+echo ""
+echo "IMPORTANT:"
+echo "PearlFortune says MDL rewards are sent to the MDL address"
+echo "derived from the SAME SEED PHRASE as this PRL wallet."
+echo "Do NOT use exchange/Safe/K1 wallet addresses here."
+echo "Do NOT paste your seed phrase anywhere."
 echo "=========================================="
 
 nvidia-smi || true
 
-while true; do
-  ./SRBMiner-MULTI \
-    --algorithm pearlhash \
-    --pool "${POOL}" \
-    --wallet "${FULL_WALLET}" \
-    --password x \
-    --disable-cpu
+ARGS=(
+  --pool "${POOL}"
+  --wallet "${PRL_WALLET}"
+  --worker "${WORKER}"
+  --pf
+  --no-tui
+)
 
-  echo "Miner stopped. Restarting in 10 seconds..."
+if [ -n "$GPUS" ]; then
+  ARGS+=(--gpus "$GPUS")
+fi
+
+while true; do
+  echo "Running command:"
+  echo "$BIN ${ARGS[*]}"
+  "$BIN" "${ARGS[@]}"
+
+  echo "Miner stopped/crashed. Restarting in 10 seconds..."
   sleep 10
 done
