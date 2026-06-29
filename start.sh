@@ -1,55 +1,34 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 POOL="${POOL:-global.pearlfortune.org:8888}"
-PRL_WALLET="${PRL_WALLET:-prl1pl3mxhtlzw4qjycrgxp8n9nd2dntum8gqf03ywsdqw6rm8gp67w3qvdtz79}"
-WORKER="${WORKER:-vast-${HOSTNAME}-5090}"
-GPUS="${GPUS:-}"
+PRL_WALLET="${PRL_WALLET:-${WALLET:-}}"
+WORKER="${WORKER:-vast-$(hostname)}"
 
-BIN="$(find /opt/tw-pearl-miner -type f -name 'pearl-gpu-miner*' | head -n 1)"
+echo "=========================================="
+echo "Starting PearlFortune PRL + MDL mining"
+echo "Miner: tw-pearl-miner / pearl-gpu-miner"
+echo "Pool: $POOL"
+echo "Worker: $WORKER"
+echo "PRL wallet: $PRL_WALLET"
+echo "=========================================="
 
-if [ -z "$BIN" ]; then
-  echo "ERROR: pearl-gpu-miner not found."
-  find /opt/tw-pearl-miner -maxdepth 5 -type f
+if [[ -z "$PRL_WALLET" ]]; then
+  echo "ERROR: PRL_WALLET is missing."
+  echo "Set PRL_WALLET to your prl1... wallet address in Vast."
   exit 1
 fi
 
-chmod +x "$BIN"
-cd "$(dirname "$BIN")"
-
-echo "=========================================="
-echo "Starting PearlFortune PRL + MDL merge mining"
-echo "Pool: ${POOL}"
-echo "PRL payout wallet: ${PRL_WALLET}"
-echo "Worker: ${WORKER}"
-echo "Miner: ${BIN}"
-echo ""
-echo "IMPORTANT:"
-echo "PearlFortune says MDL rewards are sent to the MDL address"
-echo "derived from the SAME SEED PHRASE as this PRL wallet."
-echo "Do NOT use exchange/Safe/K1 wallet addresses here."
-echo "Do NOT paste your seed phrase anywhere."
-echo "=========================================="
+if [[ "$PRL_WALLET" != prl1* ]]; then
+  echo "ERROR: PearlFortune needs your official PRL wallet beginning with prl1..."
+  echo "Do NOT use the K1Pool KrL... account here."
+  exit 1
+fi
 
 nvidia-smi || true
 
-ARGS=(
-  --pool "${POOL}"
-  --wallet "${PRL_WALLET}"
-  --worker "${WORKER}"
-  --pf
+exec pearl-gpu-miner \
+  --pool "$POOL" \
+  --wallet "$PRL_WALLET" \
+  --worker "$WORKER" \
   --no-tui
-)
-
-if [ -n "$GPUS" ]; then
-  ARGS+=(--gpus "$GPUS")
-fi
-
-while true; do
-  echo "Running command:"
-  echo "$BIN ${ARGS[*]}"
-  "$BIN" "${ARGS[@]}"
-
-  echo "Miner stopped/crashed. Restarting in 10 seconds..."
-  sleep 10
-done

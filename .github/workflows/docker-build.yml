@@ -1,11 +1,10 @@
-name: Build PRL MDL Merge Miner
+name: Build PearlFortune TW Miner
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-      - master
 
 jobs:
   build:
@@ -18,7 +17,7 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: jokez85
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
@@ -26,4 +25,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: jokez85/prl-wildrig-salad-builder:latest
+          tags: |
+            jokez85/prl-wildrig-salad-builder:pearlfortune-tw226
+            jokez85/prl-wildrig-salad-builder:latest
